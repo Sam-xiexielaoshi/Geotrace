@@ -34,10 +34,10 @@ void PrintLocalFrame(const char *name, const GeoCoordinate &coordinate)
         << '\n';
 }
 
-void PrintBearingDirection(const char *name, const GeoCoordinate &coordinate, double bearningDegrees)
+void PrintBearingDirection(const char *name, const GeoCoordinate &coordinate, double bearingDegrees)
 {
-    const auto direction = BearingToDirection(coordinate, bearningDegrees);
-    std::cout << name << " | Bearing: " << bearningDegrees << " \n";
+    const auto direction = BearingToDirection(coordinate, bearingDegrees);
+    std::cout << name << " | Bearing: " << bearingDegrees << " \n";
     std::cout << "Direction: " << direction.x << ", " << direction.y << ", " << direction.z << "\n";
     std::cout << "|Direction| = " << direction.Length() << "\n";
 }
@@ -87,14 +87,94 @@ int main()
     std::cout << "Intersection . PlaneA = " << Dot(intersection, planeA.normal) << "\n";
     std::cout << "Intersection . PlaneB = " << Dot(intersection, planeB.normal) << "\n";
 
+    // ------------------------------------------------------------
+    // End-to-end reconstruction test
+    // ------------------------------------------------------------
+
     const GeoCoordinate target{20.0, 40.0};
+
     const GeoCoordinate observerA{0.0, 0.0};
     const GeoCoordinate observerB{0.0, 90.0};
+
+    // Generate synthetic bearings from the known target.
+    // In the real application these bearings would come from input data.
     const double bearingA = InitialBearing(observerA, target);
     const double bearingB = InitialBearing(observerB, target);
 
-    std::cout << "Target: (20.0, 40.0)\n";
-    std::cout << "Initial bearing from observer A to target: " << bearingA << "\n";
-    std::cout << "Initial bearing from observer B to target: " << bearingB << "\n";
+    std::cout << "\n";
+    std::cout << "========== End-to-End Reconstruction ==========\n";
+
+    std::cout << "Known target: ("
+              << target.latitude << ", "
+              << target.longitude << ")\n";
+
+    std::cout << "Observer A bearing: "
+              << bearingA << " degrees\n";
+
+    std::cout << "Observer B bearing: "
+              << bearingB << " degrees\n";
+
+    // ------------------------------------------------------------
+    // Convert observers to 3D positions
+    // ------------------------------------------------------------
+
+    const Vec3 positionA = LatLonToECEF(observerA);
+    const Vec3 positionB = LatLonToECEF(observerB);
+
+    // ------------------------------------------------------------
+    // Convert bearings into 3D tangent directions
+    // ------------------------------------------------------------
+
+    const Vec3 directionA = BearingToDirection(observerA, bearingA);
+    const Vec3 directionB = BearingToDirection(observerB, bearingB);
+
+    // ------------------------------------------------------------
+    // Construct the two bearing planes
+    // ------------------------------------------------------------
+
+    const BearingPlane bearingPlaneA =
+        CreateBearingPlane(positionA, directionA);
+
+    const BearingPlane bearingPlaneB =
+        CreateBearingPlane(positionB, directionB);
+
+    // ------------------------------------------------------------
+    // Intersect the two bearing planes
+    // ------------------------------------------------------------
+
+    const Vec3 targetIntersection =
+        IntersectPlanes(bearingPlaneA, bearingPlaneB);
+
+    // The intersection is a line through the Earth's center,
+    // so both directions are possible.
+    const Vec3 candidateA = targetIntersection;
+    const Vec3 candidateB = {
+        -targetIntersection.x,
+        -targetIntersection.y,
+        -targetIntersection.z};
+
+    // ------------------------------------------------------------
+    // Convert both candidates back to latitude / longitude
+    // ------------------------------------------------------------
+
+    const GeoCoordinate resultA =
+        ECEFToLatLon(candidateA);
+
+    const GeoCoordinate resultB =
+        ECEFToLatLon(candidateB);
+
+    // ------------------------------------------------------------
+    // Print results
+    // ------------------------------------------------------------
+
+    std::cout << "\nCandidate 1: ("
+              << resultA.latitude << ", "
+              << resultA.longitude << ")\n";
+
+    std::cout << "Candidate 2: ("
+              << resultB.latitude << ", "
+              << resultB.longitude << ")\n";
+
+    std::cout << "===============================================\n";
     return 0;
 }
