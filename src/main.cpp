@@ -51,7 +51,7 @@ int main()
 
     Vec3 crossProduct = Cross(a, b);
     std::cout << "Cross product: (" << crossProduct.x << ", " << crossProduct.y << ", " << crossProduct.z << ")\n";
-    std::cout << "\nLenght of a: " << a.Length() << "\n";
+    std::cout << "\nLength of a: " << a.Length() << "\n";
 
     PrintECEF("Equator / Prime Meridian", {0.0, 0.0});
     PrintECEF("Equator / 90E", {0.0, 90.0});
@@ -70,25 +70,31 @@ int main()
     const auto direction = BearingToDirection({0.0, 0.0}, 45.0);
     const auto plane = CreateBearingPlane(position, direction);
 
-    std::cout << "Bearing plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ")\n";  
+    std::cout << "Bearing plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ")\n";
     std::cout << "|Normal| = " << plane.normal.Length() << "\n";
     std::cout << "Position . Normal = " << Dot(position, plane.normal) << "\n";
     std::cout << "Direction . Normal = " << Dot(direction, plane.normal) << "\n";
 
-    BearingPlane planeA
-    {
-        {1.0, 0.0, 0.0}
-    };
+    BearingPlane planeA{
+        {1.0, 0.0, 0.0}};
 
-    BearingPlane planeB
-    {
-        {0.0, 1.0, 0.0}
-    };
+    BearingPlane planeB{
+        {0.0, 1.0, 0.0}};
 
     Vec3 intersection = IntersectPlanes(planeA, planeB);
     std::cout << "Plane intersection: (" << intersection.x << ", " << intersection.y << ", " << intersection.z << ")\n";
     std::cout << "|Intersection| = " << intersection.Length() << "\n";
     std::cout << "Intersection . PlaneA = " << Dot(intersection, planeA.normal) << "\n";
     std::cout << "Intersection . PlaneB = " << Dot(intersection, planeB.normal) << "\n";
+
+    const GeoCoordinate target{20.0, 40.0};
+    const GeoCoordinate observerA{0.0, 0.0};
+    const GeoCoordinate observerB{0.0, 90.0};
+    const double bearingA = InitialBearing(observerA, target);
+    const double bearingB = InitialBearing(observerB, target);
+
+    std::cout << "Target: (20.0, 40.0)\n";
+    std::cout << "Initial bearing from observer A to target: " << bearingA << "\n";
+    std::cout << "Initial bearing from observer B to target: " << bearingB << "\n";
     return 0;
 }
