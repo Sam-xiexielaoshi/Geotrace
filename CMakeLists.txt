@@ -13,6 +13,8 @@ add_executable(GeoTrace
     src/main.cpp
     src/geometry/Vec3.cpp
     src/geodesy/GeoCoordinate.cpp
+    src/geometry/BearingPlane.cpp
+    src/geometry/PlaneIntersection.cpp
 )
 
 target_include_directories(GeoTrace

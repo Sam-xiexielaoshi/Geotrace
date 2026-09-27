@@ -2,6 +2,8 @@
 #include <iomanip>
 #include "GeoTrace/geometry/Vec3.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
+#include "GeoTrace/geometry/BearingPlane.h"
+#include "GeoTrace/geometry/PlaneIntersection.h"
 
 using namespace geotrace::geometry;
 using namespace geotrace::geodesy;
@@ -9,7 +11,7 @@ using namespace geotrace::geodesy;
 void PrintECEF(const char *name, const GeoCoordinate &coordinate)
 {
     const auto position = LatLonToECEF(coordinate);
-    std::cout << name << "/n";
+    std::cout << name << "\n";
     std::cout << "ECEF: (" << position.x << ", " << position.y << ", " << position.z << ")\n";
     std::cout << "\n";
 }
@@ -63,5 +65,30 @@ int main()
     PrintBearingDirection("Equator / Prime Meridian", {0.0, 0.0}, 180.0);
     PrintBearingDirection("Equator / Prime Meridian", {0.0, 0.0}, 270.0);
     PrintBearingDirection("Equator / Prime Meridian", {0.0, 0.0}, 45.0);
+
+    const auto position = LatLonToECEF({0.0, 0.0});
+    const auto direction = BearingToDirection({0.0, 0.0}, 45.0);
+    const auto plane = CreateBearingPlane(position, direction);
+
+    std::cout << "Bearing plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ")\n";  
+    std::cout << "|Normal| = " << plane.normal.Length() << "\n";
+    std::cout << "Position . Normal = " << Dot(position, plane.normal) << "\n";
+    std::cout << "Direction . Normal = " << Dot(direction, plane.normal) << "\n";
+
+    BearingPlane planeA
+    {
+        {1.0, 0.0, 0.0}
+    };
+
+    BearingPlane planeB
+    {
+        {0.0, 1.0, 0.0}
+    };
+
+    Vec3 intersection = IntersectPlanes(planeA, planeB);
+    std::cout << "Plane intersection: (" << intersection.x << ", " << intersection.y << ", " << intersection.z << ")\n";
+    std::cout << "|Intersection| = " << intersection.Length() << "\n";
+    std::cout << "Intersection . PlaneA = " << Dot(intersection, planeA.normal) << "\n";
+    std::cout << "Intersection . PlaneB = " << Dot(intersection, planeB.normal) << "\n";
     return 0;
 }
