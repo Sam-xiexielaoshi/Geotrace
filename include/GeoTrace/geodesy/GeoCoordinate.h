@@ -19,4 +19,5 @@ namespace geotrace::geodesy
 
     geometry::Vec3 LatLonToECEF(const GeoCoordinate &coordinate);
     LocalFrame ComputeLocalFrame(const GeoCoordinate &coordinate);
+    geometry::Vec3 BearingToDirection(const GeoCoordinate &coordinate, double bearingDegrees);
 }
