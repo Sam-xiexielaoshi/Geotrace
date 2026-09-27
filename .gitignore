@@ -1,0 +1,111 @@
+# =========================
+# Build directories
+# =========================
+
+build/
+build-*/
+cmake-build-*/
+
+
+# =========================
+# Visual Studio / MSVC
+# =========================
+
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio generated files
+*.VC.db
+*.VC.VC.opendb
+
+
+# =========================
+# CMake
+# =========================
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+Makefile
+
+
+# =========================
+# Compiled binaries
+# =========================
+
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.obj
+*.o
+*.pdb
+*.ilk
+
+
+# =========================
+# Debug / Release output
+# =========================
+
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+
+
+# =========================
+# VS Code
+# =========================
+
+.vscode/
+
+
+# =========================
+# OS files
+# =========================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+
+# macOS
+.DS_Store
+
+
+# =========================
+# Logs
+# =========================
+
+*.log
+
+
+# =========================
+# Temporary files
+# =========================
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+
+# =========================
+# Test / coverage output
+# =========================
+
+Testing/
+coverage/
+*.gcda
+*.gcno
+*.gcov
