@@ -14,6 +14,24 @@ void PrintECEF(const char *name, const GeoCoordinate &coordinate)
     std::cout << "\n";
 }
 
+void PrintLocalFrame(const char* name, const GeoCoordinate& coordinate)
+{
+    const auto frame = ComputeLocalFrame(coordinate);
+    std::cout<<name<<'\n';
+    std::cout<<"North: "<< frame.north.x << ", " << frame.north.y << ", " << frame.north.z << "\n";
+    std::cout<<"East: "<< frame.east.x << ", " << frame.east.y << ", " << frame.east.z << "\n";
+
+    std::cout
+    << "|North| = "
+    << frame.north.Length()
+    << '\n';
+
+std::cout
+    << "|East| = "
+    << frame.east.Length()
+    << '\n';
+}
+
 int main()
 {
     std::cout<<std::fixed<<std::setprecision(6);
@@ -28,5 +46,9 @@ int main()
     PrintECEF("Equator / Prime Meridian", {0.0, 0.0});
     PrintECEF("Equator / 90E", {0.0, 90.0});
     PrintECEF("North Pole", {90.0, 0.0});
+
+    PrintLocalFrame("Equator / Prime Meridian", {0.0, 0.0});
+    PrintLocalFrame("Equator / 90E", {0.0, 90.0});
+    PrintLocalFrame("North Pole", {90.0, 0.0});
     return 0;
 }

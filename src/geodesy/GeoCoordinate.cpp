@@ -23,4 +23,26 @@ namespace geotrace::geodesy
             std::cos(latitude) * std::sin(longitude),
             std::sin(latitude)};
     }
+
+    LocalFrame ComputeLocalFrame(const GeoCoordinate &coordinate)
+    {
+        const double latitude = DegreesToRadians(coordinate.latitude);
+        const double longitude = DegreesToRadians(coordinate.longitude);
+        const Vec3 north
+        {
+            -std::sin(latitude) * std::cos(longitude),
+            -std::sin(latitude) * std::sin(longitude),
+            std::cos(latitude)
+        };
+
+
+        const Vec3 east
+        {
+            -std::sin(longitude),
+            std::cos(longitude),
+            0.0
+        };
+
+        return {north, east};
+    }
 }
