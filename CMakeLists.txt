@@ -18,6 +18,8 @@ add_executable(GeoTrace
     src/geometry/BearingPlane.cpp
     src/geometry/PlaneIntersection.cpp
     src/solver/BearingSolver.cpp
+    src/io/CsvReader.cpp
+    src/io/CsvWriter.cpp
 
 )
 
@@ -47,12 +49,16 @@ add_executable(GeoTraceTests
     tests/BearingPlaneTests.cpp
     tests/PlaneIntersectionTests.cpp
     tests/BearingSolverTests.cpp
+    tests/CsvReaderTests.cpp
+    tests/CsvWriterTests.cpp
 
     src/geometry/Vec3.cpp
     src/geodesy/GeoCoordinate.cpp
     src/geometry/BearingPlane.cpp
     src/geometry/PlaneIntersection.cpp
     src/solver/BearingSolver.cpp
+    src/io/CsvReader.cpp
+    src/io/CsvWriter.cpp
 
 )
 
