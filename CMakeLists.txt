@@ -15,6 +15,7 @@ add_executable(GeoTrace
     src/geodesy/GeoCoordinate.cpp
     src/geometry/BearingPlane.cpp
     src/geometry/PlaneIntersection.cpp
+    src/solver/BearingSolver.cpp
 )
 
 target_include_directories(GeoTrace

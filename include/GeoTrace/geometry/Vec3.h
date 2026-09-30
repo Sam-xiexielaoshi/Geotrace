@@ -11,6 +11,8 @@ namespace geotrace::geometry
         Vec3 Normalize() const;
     };
 
+    Vec3 operator+(const Vec3 &a, const Vec3 &b);
+
     Vec3 Cross(const Vec3 &a, const Vec3 &b);
     double Dot(const Vec3 &a, const Vec3 &b);
 }

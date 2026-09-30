@@ -4,10 +4,12 @@
 #include "GeoTrace/geodesy/GeoCoordinate.h"
 #include "GeoTrace/geometry/BearingPlane.h"
 #include "GeoTrace/geometry/PlaneIntersection.h"
+#include "GeoTrace/solver/BearingObservation.h"
+#include "GeoTrace/solver/BearingSolver.h"
 
 using namespace geotrace::geometry;
 using namespace geotrace::geodesy;
-
+using namespace geotrace::solver;
 void PrintECEF(const char *name, const GeoCoordinate &coordinate)
 {
     const auto position = LatLonToECEF(coordinate);
@@ -95,11 +97,13 @@ int main()
 
     const GeoCoordinate observerA{0.0, 0.0};
     const GeoCoordinate observerB{0.0, 90.0};
+    const GeoCoordinate observerC{30.0, 45.0};
 
-    // Generate synthetic bearings from the known target.
-    // In the real application these bearings would come from input data.
     const double bearingA = InitialBearing(observerA, target);
+
     const double bearingB = InitialBearing(observerB, target);
+
+    const double bearingC = InitialBearing(observerC, target);
 
     std::cout << "\n";
     std::cout << "========== End-to-End Reconstruction ==========\n";
@@ -176,5 +180,55 @@ int main()
               << resultB.longitude << ")\n";
 
     std::cout << "===============================================\n";
+
+    // ------------------------------------------------------------
+    // BearingObservation / BearingSolver test
+    // ------------------------------------------------------------
+
+    const BearingObservation observationA{
+        observerA,
+        bearingA};
+
+    const BearingObservation observationB{
+        observerB,
+        bearingB};
+
+    const BearingObservation observationC{
+        observerC,
+        bearingC};
+
+    std::cout << "\n========== Bearing Solver Test ==========\n";
+
+    std::cout << "Observation A: ("
+              << observationA.observer.latitude << ", "
+              << observationA.observer.longitude << "), bearing = "
+              << observationA.bearingDegrees << " degrees\n";
+
+    std::cout << "Observation B: ("
+              << observationB.observer.latitude << ", "
+              << observationB.observer.longitude << "), bearing = "
+              << observationB.bearingDegrees << " degrees\n";
+
+    std::cout << "Observation C: ("
+              << observationC.observer.latitude << ", "
+              << observationC.observer.longitude << "), bearing = "
+              << observationC.bearingDegrees << " degrees\n";
+
+    const auto solverResult =
+        Solve(
+            observationA,
+            observationB,
+            observationC);
+
+    std::cout << "\nSolver result:\n";
+
+    std::cout << "Latitude: "
+              << solverResult.latitude << "\n";
+
+    std::cout << "Longitude: "
+              << solverResult.longitude << "\n";
+
+    std::cout << "==========================================\n";
+
     return 0;
 }
