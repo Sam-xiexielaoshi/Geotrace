@@ -24,4 +24,6 @@ namespace geotrace::geodesy
     double InitialBearing(const GeoCoordinate& observer, const GeoCoordinate& target);
 
     GeoCoordinate ECEFToLatLon(const geometry::Vec3& position);
+
+    geometry::Vec3 TargetTangentDirection(const geometry::Vec3& observer, const geometry::Vec3& target);
 }

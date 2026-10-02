@@ -15,6 +15,11 @@ namespace geotrace::geometry
         return {x / length, y / length, z / length};
     }
 
+    bool Vec3::IsNearlyZero(double epsilon) const
+    {
+        return Length() < epsilon;
+    }
+
     Vec3 Cross(const Vec3 &a, const Vec3 &b)
     {
         return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};

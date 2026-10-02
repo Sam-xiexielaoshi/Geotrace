@@ -55,3 +55,26 @@ TEST_CASE("Vec3 addition is calculated correctly")
     REQUIRE(result.y == 7.0);
     REQUIRE(result.z == 9.0);
 }
+
+TEST_CASE("Vec3 detects nearly zero vectors")
+{
+    const geotrace::geometry::Vec3 zero{0.0, 0.0, 0.0};
+
+    REQUIRE(zero.IsNearlyZero());
+
+    const geotrace::geometry::Vec3 tiny{
+        1e-14,
+        0.0,
+        0.0
+    };
+
+    REQUIRE(tiny.IsNearlyZero());
+
+    const geotrace::geometry::Vec3 normal{
+        1.0,
+        0.0,
+        0.0
+    };
+
+    REQUIRE_FALSE(normal.IsNearlyZero());
+}

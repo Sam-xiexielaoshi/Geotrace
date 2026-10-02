@@ -2,6 +2,7 @@
 #include "GeoTrace/geometry/Vec3.h"
 
 #include <cmath>
+#include <stdexcept>
 
 namespace geotrace::geodesy
 {
@@ -53,7 +54,7 @@ namespace geotrace::geodesy
             frame.north.z * northWeight + frame.east.z * eastWeight};
     }
 
-    double InitialBearing(const GeoCoordinate& observer, const GeoCoordinate& target)
+    double InitialBearing(const GeoCoordinate &observer, const GeoCoordinate &target)
     {
         const double latitude1 = DegreesToRadians(observer.latitude);
         const double latitude2 = DegreesToRadians(target.latitude);
@@ -64,14 +65,27 @@ namespace geotrace::geodesy
         const double x = std::cos(latitude1) * std::sin(latitude2) - std::sin(latitude1) * std::cos(latitude2) * std::cos(deltaLongitude);
         double bearing = std::atan2(y, x);
         bearing = bearing * 180.0 / PI;
-        if(bearing < 0.0) bearing += 360.0;
+        if (bearing < 0.0)
+            bearing += 360.0;
         return bearing;
     }
 
-    GeoCoordinate ECEFToLatLon(const geometry::Vec3& position)
+    GeoCoordinate ECEFToLatLon(const geometry::Vec3 &position)
     {
         const double latitude = std::asin(position.z);
         const double longitude = std::atan2(position.y, position.x);
         return {latitude * 180.0 / PI, longitude * 180.0 / PI};
+    }
+
+    geometry::Vec3 TargetTangentDirection(const geometry::Vec3 &observer, const geometry::Vec3 &target)
+    {
+        const double projection = geometry::Dot(observer, target);
+        const geometry::Vec3 tangent{target.x - observer.x * projection, target.y - observer.y * projection, target.z - observer.z * projection};
+
+        if (tangent.IsNearlyZero())
+        {
+            throw std::runtime_error("Observer and target are in the same direction; tangent direction is undefined.");
+        }
+        return target.Normalize();
     }
 }

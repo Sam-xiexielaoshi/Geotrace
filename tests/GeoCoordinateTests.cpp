@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <cmath>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "GeoTrace/geodesy/GeoCoordinate.h"
@@ -186,4 +187,44 @@ TEST_CASE("Bearing direction is a unit vector")
     REQUIRE_THAT(
         direction.Length(),
         WithinAbs(1.0, 1e-12));
+}
+
+TEST_CASE("Target tangent direction points toward a target")
+{
+    const geotrace::geometry::Vec3 observer{
+        1.0,
+        0.0,
+        0.0};
+
+    const geotrace::geometry::Vec3 target{
+        0.0,
+        1.0,
+        0.0};
+
+    const auto tangent =
+        geotrace::geodesy::TargetTangentDirection(
+            observer,
+            target);
+
+    REQUIRE(std::abs(tangent.x - 0.0) < 1e-12);
+    REQUIRE(std::abs(tangent.y - 1.0) < 1e-12);
+    REQUIRE(std::abs(tangent.z - 0.0) < 1e-12);
+}
+
+TEST_CASE("Target tangent direction rejects antipodal points")
+{
+    const geotrace::geometry::Vec3 observer{
+        1.0,
+        0.0,
+        0.0};
+
+    const geotrace::geometry::Vec3 target{
+        -1.0,
+        0.0,
+        0.0};
+
+    REQUIRE_THROWS(
+        geotrace::geodesy::TargetTangentDirection(
+            observer,
+            target));
 }

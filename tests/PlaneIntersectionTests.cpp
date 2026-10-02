@@ -65,3 +65,17 @@ TEST_CASE("Plane intersection is perpendicular to both plane normals")
         Dot(intersection, planeB.normal),
         WithinAbs(0.0, 1e-12));
 }
+
+TEST_CASE("Parallel planes cannot be intersected")
+{
+    const geotrace::geometry::BearingPlane planeA{
+        {1.0, 0.0, 0.0}};
+
+    const geotrace::geometry::BearingPlane planeB{
+        {1.0, 0.0, 0.0}};
+
+    REQUIRE_THROWS(
+        geotrace::geometry::IntersectPlanes(
+            planeA,
+            planeB));
+}
