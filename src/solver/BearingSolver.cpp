@@ -24,14 +24,17 @@ namespace geotrace::solver
         const auto planeC = geometry::CreateBearingPlane(positionC, directionC);
 
         // calculate pairwise plane intersections
-        const auto intersectionAB = geometry::IntersectPlanes(planeA, planeB);
-        const auto intersectionBC = geometry::IntersectPlanes(planeB, planeC);
-        const auto intersectionCA = geometry::IntersectPlanes(planeA, planeC);
+        const auto rawIntersectionAB = geometry::IntersectPlanes(planeA, planeB);
+        const auto rawIntersectionBC = geometry::IntersectPlanes(planeB, planeC);
+        const auto rawIntersectionCA = geometry::IntersectPlanes(planeC, planeA);
+        const auto intersectionAB = geometry::ResolveIntersectionDirection(rawIntersectionAB, observationA, observationB);
+        const auto intersectionBC = geometry::ResolveIntersectionDirection(rawIntersectionBC, observationB, observationC);
+        const auto intersectionCA = geometry::ResolveIntersectionDirection(rawIntersectionCA, observationC, observationA);
 
         // combine the intersections
         const auto combined = (intersectionAB + intersectionBC + intersectionCA).Normalize();
 
-        //convert final direction back to latitude and longitude
+        // convert final direction back to latitude and longitude
         return geodesy::ECEFToLatLon(combined);
     }
 }

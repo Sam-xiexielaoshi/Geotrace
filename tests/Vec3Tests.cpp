@@ -65,16 +65,26 @@ TEST_CASE("Vec3 detects nearly zero vectors")
     const geotrace::geometry::Vec3 tiny{
         1e-14,
         0.0,
-        0.0
-    };
+        0.0};
 
     REQUIRE(tiny.IsNearlyZero());
 
     const geotrace::geometry::Vec3 normal{
         1.0,
         0.0,
-        0.0
-    };
+        0.0};
 
     REQUIRE_FALSE(normal.IsNearlyZero());
+}
+
+TEST_CASE("Vec3 unary minus negates all components")
+{
+    const geotrace::geometry::Vec3 vector{
+        1.0, -2.0, 3.0};
+
+    const auto negated = -vector;
+
+    REQUIRE(std::abs(negated.x + 1.0) < 1e-12);
+    REQUIRE(std::abs(negated.y - 2.0) < 1e-12);
+    REQUIRE(std::abs(negated.z + 3.0) < 1e-12);
 }

@@ -34,4 +34,9 @@ namespace geotrace::geometry
     {
         return {a.x + b.x, a.y + b.y, a.z + b.z};
     }
+
+    Vec3 Vec3::operator-() const
+    {
+        return {-x, -y, -z};
+    }
 }

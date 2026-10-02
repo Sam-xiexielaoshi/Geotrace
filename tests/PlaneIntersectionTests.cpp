@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <cmath>
 
 #include "GeoTrace/geometry/PlaneIntersection.h"
 #include "GeoTrace/geometry/BearingPlane.h"
@@ -78,4 +79,32 @@ TEST_CASE("Parallel planes cannot be intersected")
         geotrace::geometry::IntersectPlanes(
             planeA,
             planeB));
+}
+
+TEST_CASE("Intersection direction resolves the correct antipodal candidate")
+{
+    using geotrace::geodesy::GeoCoordinate;
+    using geotrace::geometry::Vec3;
+    using geotrace::solver::BearingObservation;
+
+    const BearingObservation observationA{
+        {0.0, 0.0},
+        90.0};
+
+    const BearingObservation observationB{
+        {0.0, 180.0},
+        270.0};
+
+    const Vec3 intersection{
+        0.0, 1.0, 0.0};
+
+    const Vec3 resolved =
+        geotrace::geometry::ResolveIntersectionDirection(
+            intersection,
+            observationA,
+            observationB);
+
+    REQUIRE(std::abs(resolved.x - 0.0) < 1e-12);
+    REQUIRE(std::abs(resolved.y - 1.0) < 1e-12);
+    REQUIRE(std::abs(resolved.z - 0.0) < 1e-12);
 }
