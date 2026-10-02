@@ -4,6 +4,8 @@
 #include "GeoTrace/geometry/PlaneIntersection.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
 
+#include <stdexcept>
+
 namespace geotrace::solver
 {
     geodesy::GeoCoordinate Solve(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC)
@@ -32,9 +34,13 @@ namespace geotrace::solver
         const auto intersectionCA = geometry::ResolveIntersectionDirection(rawIntersectionCA, observationC, observationA);
 
         // combine the intersections
-        const auto combined = (intersectionAB + intersectionBC + intersectionCA).Normalize();
+        const auto combined = intersectionAB + intersectionBC + intersectionCA;
+        if (combined.IsNearlyZero())
+        {
+            throw std::runtime_error("Bearing observations do not converge to a single point");
+        }
 
         // convert final direction back to latitude and longitude
-        return geodesy::ECEFToLatLon(combined);
+        return geodesy::ECEFToLatLon(combined.Normalize());
     }
 }
