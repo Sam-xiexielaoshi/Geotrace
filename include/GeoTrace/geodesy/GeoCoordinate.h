@@ -27,4 +27,5 @@ namespace geotrace::geodesy
 
     geometry::Vec3 TargetTangentDirection(const geometry::Vec3 &observer, const geometry::Vec3 &target);
     bool IsBearingConsistent(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate);
+    double BearingAngularResidual(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate);
 }

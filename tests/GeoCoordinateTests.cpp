@@ -271,3 +271,63 @@ TEST_CASE("Bearing consistency identifies the correct candidate")
         )
     );
 }
+
+TEST_CASE("Bearing angular residual is zero for a matching target")
+{
+    const geotrace::geometry::Vec3 observer{
+        1.0, 0.0, 0.0
+    };
+
+    const geotrace::geometry::Vec3 bearingDirection{
+        0.0, 1.0, 0.0
+    };
+
+    const geotrace::geometry::Vec3 candidate{
+        0.0, 1.0, 0.0
+    };
+
+    const double residual =
+        geotrace::geodesy::BearingAngularResidual(
+            observer,
+            bearingDirection,
+            candidate
+        );
+
+    REQUIRE(
+        std::abs(residual) < 1e-12
+    );
+}
+
+TEST_CASE("Bearing angular residual measures directional error")
+{
+    const geotrace::geometry::Vec3 observer{
+        1.0, 0.0, 0.0
+    };
+
+    const geotrace::geometry::Vec3 bearingDirection{
+        0.0, 1.0, 0.0
+    };
+
+    const double angle =
+        geotrace::geodesy::DegreesToRadians(10.0);
+
+    const geotrace::geometry::Vec3 candidate{
+        0.0,
+        std::cos(angle),
+        std::sin(angle)
+    };
+
+    const double residual =
+        geotrace::geodesy::BearingAngularResidual(
+            observer,
+            bearingDirection,
+            candidate
+        );
+
+    REQUIRE(
+        std::abs(
+            residual -
+            geotrace::geodesy::DegreesToRadians(10.0)
+        ) < 1e-12
+    );
+}

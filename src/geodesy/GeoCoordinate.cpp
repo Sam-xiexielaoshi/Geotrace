@@ -2,6 +2,7 @@
 #include "GeoTrace/geometry/Vec3.h"
 
 #include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
 namespace geotrace::geodesy
@@ -86,7 +87,7 @@ namespace geotrace::geodesy
         {
             throw std::runtime_error("Observer and target are in the same direction; tangent direction is undefined.");
         }
-        return target.Normalize();
+        return tangent.Normalize();
     }
 
     bool IsBearingConsistent(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate)
@@ -94,5 +95,13 @@ namespace geotrace::geodesy
         const geometry::Vec3 predictedTangent = TargetTangentDirection(observer, candidate);
         const double alignment = geometry::Dot(bearingDirection, predictedTangent);
         return alignment > 0.0;
+    }
+
+    double BearingAngularResidual(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate)
+    {
+        const geometry::Vec3 predictedTangent = TargetTangentDirection(observer, candidate);
+        double alignment = geometry::Dot(bearingDirection, predictedTangent);
+        alignment = std::clamp(alignment, -1.0, 1.0);
+        return std::acos(alignment);
     }
 }
