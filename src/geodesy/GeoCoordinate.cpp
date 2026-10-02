@@ -88,4 +88,11 @@ namespace geotrace::geodesy
         }
         return target.Normalize();
     }
+
+    bool IsBearingConsistent(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate)
+    {
+        const geometry::Vec3 predictedTangent = TargetTangentDirection(observer, candidate);
+        const double alignment = geometry::Dot(bearingDirection, predictedTangent);
+        return alignment > 0.0;
+    }
 }

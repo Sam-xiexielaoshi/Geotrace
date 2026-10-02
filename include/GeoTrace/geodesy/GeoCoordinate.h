@@ -21,9 +21,10 @@ namespace geotrace::geodesy
     LocalFrame ComputeLocalFrame(const GeoCoordinate &coordinate);
     geometry::Vec3 BearingToDirection(const GeoCoordinate &coordinate, double bearingDegrees);
 
-    double InitialBearing(const GeoCoordinate& observer, const GeoCoordinate& target);
+    double InitialBearing(const GeoCoordinate &observer, const GeoCoordinate &target);
 
-    GeoCoordinate ECEFToLatLon(const geometry::Vec3& position);
+    GeoCoordinate ECEFToLatLon(const geometry::Vec3 &position);
 
-    geometry::Vec3 TargetTangentDirection(const geometry::Vec3& observer, const geometry::Vec3& target);
+    geometry::Vec3 TargetTangentDirection(const geometry::Vec3 &observer, const geometry::Vec3 &target);
+    bool IsBearingConsistent(const geometry::Vec3 &observer, const geometry::Vec3 &bearingDirection, const geometry::Vec3 &candidate);
 }

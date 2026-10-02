@@ -228,3 +228,46 @@ TEST_CASE("Target tangent direction rejects antipodal points")
             observer,
             target));
 }
+
+TEST_CASE("Bearing consistency identifies the correct candidate")
+{
+    const geotrace::geometry::Vec3 observer{
+        1.0,
+        0.0,
+        0.0
+    };
+
+    const geotrace::geometry::Vec3 bearingDirection{
+        0.0,
+        1.0,
+        0.0
+    };
+
+    const geotrace::geometry::Vec3 correctCandidate{
+        0.0,
+        1.0,
+        0.0
+    };
+
+    const geotrace::geometry::Vec3 wrongCandidate{
+        0.0,
+        -1.0,
+        0.0
+    };
+
+    REQUIRE(
+        geotrace::geodesy::IsBearingConsistent(
+            observer,
+            bearingDirection,
+            correctCandidate
+        )
+    );
+
+    REQUIRE_FALSE(
+        geotrace::geodesy::IsBearingConsistent(
+            observer,
+            bearingDirection,
+            wrongCandidate
+        )
+    );
+}
