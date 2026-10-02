@@ -108,3 +108,21 @@ TEST_CASE("Intersection direction resolves the correct antipodal candidate")
     REQUIRE(std::abs(resolved.y - 1.0) < 1e-12);
     REQUIRE(std::abs(resolved.z - 0.0) < 1e-12);
 }
+
+TEST_CASE("Nearly parallel planes cannot be intersected")
+{
+    const geotrace::geometry::BearingPlane planeA{
+        {1.0, 0.0, 0.0}
+    };
+
+    const geotrace::geometry::BearingPlane planeB{
+        {1.0, 1e-14, 0.0}
+    };
+
+    REQUIRE_THROWS(
+        geotrace::geometry::IntersectPlanes(
+            planeA,
+            planeB
+        )
+    );
+}
