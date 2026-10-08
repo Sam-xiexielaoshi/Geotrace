@@ -214,11 +214,9 @@ int main()
               << observationC.observer.longitude << "), bearing = "
               << observationC.bearingDegrees << " degrees\n";
 
-    const auto solverResult =
-        Solve(
-            observationA,
-            observationB,
-            observationC);
+    const std::vector<BearingObservation> observations{observationA, observationB, observationC};
+
+    const auto solverResult = Solve(observations);
 
     std::cout << "\nSolver result:\n";
 

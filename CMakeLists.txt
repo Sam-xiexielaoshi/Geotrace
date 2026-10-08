@@ -22,6 +22,9 @@ add_executable(GeoTrace
     src/io/CsvWriter.cpp
     src/solver/BearingObjective.cpp
     src/solver/BearingOptimizer.cpp
+    src/solver/BearingPlaneBuilder.cpp
+    src/solver/BearingIntersectionBuilder.cpp
+    src/solver/BearingCandidateCombiner.cpp
 
 )
 
@@ -63,6 +66,9 @@ add_executable(GeoTraceTests
     src/io/CsvWriter.cpp
     src/solver/BearingObjective.cpp
     src/solver/BearingOptimizer.cpp
+    src/solver/BearingPlaneBuilder.cpp
+    src/solver/BearingIntersectionBuilder.cpp
+    src/solver/BearingCandidateCombiner.cpp
 
 )
 

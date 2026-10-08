@@ -3,8 +3,10 @@
 #include "GeoTrace/solver/BearingObservation.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
 
+#include <vector>
+
 namespace geotrace::solver
 {
-    geodesy::GeoCoordinate SolveInitial(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC);
-    geodesy::GeoCoordinate Solve(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC);
+    geodesy::GeoCoordinate SolveInitial(const std::vector<BearingObservation>& observations);
+    geodesy::GeoCoordinate Solve(const std::vector<BearingObservation>& observations);
 }

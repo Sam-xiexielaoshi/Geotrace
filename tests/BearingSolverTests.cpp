@@ -3,9 +3,12 @@
 
 #include "GeoTrace/solver/BearingSolver.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
+#include "GeoTrace/solver/BearingPlaneBuilder.h"
 #include "GeoTrace/geometry/Vec3.h"
 #include "GeoTrace/solver/BearingObjective.h"
 #include "GeoTrace/solver/BearingOptimizer.h"
+#include "GeoTrace/solver/BearingIntersectionBuilder.h"
+#include "GeoTrace/solver/BearingCandidateCombiner.h"
 
 #include <cmath>
 #include <iostream>
@@ -62,6 +65,141 @@ namespace
     }
 }
 
+TEST_CASE("Bearing plane builder creates one plane per observation")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const GeoCoordinate observerA{
+        0.0,
+        0.0};
+
+    const GeoCoordinate observerB{
+        0.0,
+        90.0};
+
+    const GeoCoordinate observerC{
+        30.0,
+        45.0};
+
+    const BearingObservation observationA{
+        observerA,
+        InitialBearing(observerA, target)};
+
+    const BearingObservation observationB{
+        observerB,
+        InitialBearing(observerB, target)};
+
+    const BearingObservation observationC{
+        observerC,
+        InitialBearing(observerC, target)};
+
+    const std::vector<BearingObservation> observations{
+        observationA,
+        observationB,
+        observationC};
+
+    const auto planes =
+        BuildBearingPlanes(observations);
+
+    REQUIRE(planes.size() == observations.size());
+
+    for (const auto &plane : planes)
+    {
+        REQUIRE_THAT(
+            plane.normal.Length(),
+            WithinAbs(1.0, 1e-12));
+    }
+}
+
+TEST_CASE("Bearing intersection builder creates all unique plane pairs")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const std::vector<BearingObservation> observations{
+        {{0.0, 0.0},
+         InitialBearing({0.0, 0.0}, target)},
+        {{0.0, 90.0},
+         InitialBearing({0.0, 90.0}, target)},
+        {{30.0, 45.0},
+         InitialBearing({30.0, 45.0}, target)},
+        {{-20.0, 10.0},
+         InitialBearing({-20.0, 10.0}, target)}};
+
+    const auto planes =
+        BuildBearingPlanes(observations);
+
+    const auto intersections =
+        BuildBearingIntersections(
+            planes,
+            observations);
+
+    // 4 observers produce 4 * 3 / 2 = 6 unique pairs.
+    REQUIRE(intersections.size() == 6);
+
+    for (const auto &intersection : intersections)
+    {
+        REQUIRE_THAT(
+            intersection.Length(),
+            WithinAbs(1.0, 1e-12));
+    }
+}
+
+TEST_CASE("Bearing candidate combiner averages target directions")
+{
+    const Vec3 candidateA{
+        1.0,
+        0.0,
+        0.0};
+
+    const Vec3 candidateB{
+        1.0,
+        0.0,
+        0.0};
+
+    const Vec3 candidateC{
+        1.0,
+        0.0,
+        0.0};
+
+    const std::vector<Vec3> candidates{
+        candidateA,
+        candidateB,
+        candidateC};
+
+    const Vec3 result =
+        CombineBearingCandidates(candidates);
+
+    REQUIRE_THAT(
+        result.x,
+        WithinAbs(1.0, 1e-12));
+
+    REQUIRE_THAT(
+        result.y,
+        WithinAbs(0.0, 1e-12));
+
+    REQUIRE_THAT(
+        result.z,
+        WithinAbs(0.0, 1e-12));
+
+    REQUIRE_THAT(
+        result.Length(),
+        WithinAbs(1.0, 1e-12));
+}
+
+TEST_CASE("Bearing candidate combiner rejects cancelling candidates")
+{
+    const std::vector<Vec3> candidates{
+        {1.0, 0.0, 0.0},
+        {-1.0, 0.0, 0.0}};
+
+    REQUIRE_THROWS(
+        CombineBearingCandidates(candidates));
+}
+
 TEST_CASE("Three-observer solver reconstructs known target")
 {
     // Known target.
@@ -110,10 +248,8 @@ TEST_CASE("Three-observer solver reconstructs known target")
         bearingC};
 
     // Run the actual solver.
-    GeoCoordinate result = Solve(
-        observationA,
-        observationB,
-        observationC);
+    const std::vector<BearingObservation> observations{observationA, observationB, observationC};
+    GeoCoordinate result = Solve(observations);
 
     // The reconstructed position should match the known target.
     REQUIRE_THAT(
@@ -171,10 +307,11 @@ TEST_CASE("Three-observer solver reconstructs a different target")
         bearingC};
 
     // Run the solver.
-    GeoCoordinate result = Solve(
+    const std::vector<BearingObservation> observations{
         observationA,
         observationB,
-        observationC);
+        observationC};
+    GeoCoordinate result = Solve(observations);
 
     // The solver should reconstruct the new target.
     REQUIRE_THAT(
@@ -184,6 +321,71 @@ TEST_CASE("Three-observer solver reconstructs a different target")
     REQUIRE_THAT(
         result.longitude,
         WithinAbs(-70.0, 1e-10));
+}
+
+TEST_CASE("Four-observer solver reconstructs known target")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const std::vector<GeoCoordinate> observerLocations{
+        {0.0, 0.0},
+        {0.0, 90.0},
+        {30.0, 45.0},
+        {-20.0, 10.0}};
+
+    std::vector<BearingObservation> observations;
+
+    for (const auto &observer : observerLocations)
+    {
+        observations.push_back({observer,
+                                InitialBearing(observer, target)});
+    }
+
+    const GeoCoordinate result =
+        Solve(observations);
+
+    REQUIRE_THAT(
+        result.latitude,
+        WithinAbs(target.latitude, 1e-10));
+
+    REQUIRE_THAT(
+        result.longitude,
+        WithinAbs(target.longitude, 1e-10));
+}
+
+TEST_CASE("Five-observer solver reconstructs known target")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const std::vector<GeoCoordinate> observerLocations{
+        {0.0, 0.0},
+        {0.0, 90.0},
+        {30.0, 45.0},
+        {-20.0, 10.0},
+        {10.0, -60.0}};
+
+    std::vector<BearingObservation> observations;
+
+    for (const auto &observer : observerLocations)
+    {
+        observations.push_back({observer,
+                                InitialBearing(observer, target)});
+    }
+
+    const GeoCoordinate result =
+        Solve(observations);
+
+    REQUIRE_THAT(
+        result.latitude,
+        WithinAbs(target.latitude, 1e-10));
+
+    REQUIRE_THAT(
+        result.longitude,
+        WithinAbs(target.longitude, 1e-10));
 }
 
 TEST_CASE("Solver result converts back to a unit ECEF vector")
@@ -228,10 +430,11 @@ TEST_CASE("Solver result converts back to a unit ECEF vector")
         observerC,
         bearingC};
 
-    GeoCoordinate result = Solve(
+    const std::vector<BearingObservation> observations{
         observationA,
         observationB,
-        observationC);
+        observationC};
+    GeoCoordinate result = Solve(observations);
 
     // Convert the solver result back into 3D.
     Vec3 resultECEF = LatLonToECEF(result);
@@ -319,12 +522,11 @@ TEST_CASE("Three-observer solver responds to different bearing noise levels")
             observerC,
             noisyBearingC};
 
+        const std::vector<BearingObservation> observations{observationA, observationB, observationC};
+
         // Run the existing solver.
         const GeoCoordinate result =
-            Solve(
-                observationA,
-                observationB,
-                observationC);
+            Solve(observations);
 
         // The solver should produce finite coordinates.
         REQUIRE(std::isfinite(result.latitude));
@@ -651,9 +853,7 @@ TEST_CASE("Bearing optimizer improves a noisy initial estimate")
 
     const auto initialEstimate =
         geotrace::solver::SolveInitial(
-            observationA,
-            observationB,
-            observationC);
+            observations);
 
     const double initialError =
         geotrace::solver::BearingError(
@@ -722,9 +922,7 @@ TEST_CASE("Bearing optimizer improves solutions across noise levels")
 
         const auto initialEstimate =
             geotrace::solver::SolveInitial(
-                observationA,
-                observationB,
-                observationC);
+                observations);
 
         const auto optimizedEstimate =
             geotrace::solver::OptimizeBearingTarget(
@@ -844,9 +1042,7 @@ TEST_CASE("Bearing optimizer is evaluated across randomized noise")
 
             const auto initialEstimate =
                 geotrace::solver::SolveInitial(
-                    observationA,
-                    observationB,
-                    observationC);
+                    observations);
 
             const auto optimizedEstimate =
                 geotrace::solver::OptimizeBearingTarget(
