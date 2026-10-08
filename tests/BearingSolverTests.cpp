@@ -4,9 +4,14 @@
 #include "GeoTrace/solver/BearingSolver.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
 #include "GeoTrace/geometry/Vec3.h"
+#include "GeoTrace/solver/BearingObjective.h"
+#include "GeoTrace/solver/BearingOptimizer.h"
 
 #include <cmath>
+#include <iostream>
+#include <algorithm>
 #include <vector>
+#include <random>
 
 using namespace geotrace::solver;
 using namespace geotrace::geodesy;
@@ -33,6 +38,27 @@ namespace
         }
 
         return noisyBearing;
+    }
+
+    double AngularDistanceDegrees(
+        const geotrace::geodesy::GeoCoordinate &a,
+        const geotrace::geodesy::GeoCoordinate &b)
+    {
+        const auto positionA =
+            geotrace::geodesy::LatLonToECEF(a);
+
+        const auto positionB =
+            geotrace::geodesy::LatLonToECEF(b);
+
+        double alignment =
+            geotrace::geometry::Dot(positionA, positionB);
+
+        alignment = std::clamp(alignment, -1.0, 1.0);
+
+        constexpr double PI =
+            3.14159265358979323846;
+
+        return std::acos(alignment) * 180.0 / PI;
     }
 }
 
@@ -381,19 +407,16 @@ TEST_CASE("Initial bearing and tangent direction agree")
 {
     const GeoCoordinate target{
         20.0,
-        40.0
-    };
+        40.0};
 
     const GeoCoordinate observer{
         0.0,
-        0.0
-    };
+        0.0};
 
     const double bearing =
         InitialBearing(
             observer,
-            target
-        );
+            target);
 
     const auto observerPosition =
         LatLonToECEF(observer);
@@ -404,37 +427,487 @@ TEST_CASE("Initial bearing and tangent direction agree")
     const auto bearingDirection =
         BearingToDirection(
             observer,
-            bearing
-        );
+            bearing);
 
     const auto targetDirection =
         TargetTangentDirection(
             observerPosition,
-            targetPosition
-        );
+            targetPosition);
 
     const double alignment =
         Dot(
             bearingDirection,
-            targetDirection
-        );
+            targetDirection);
 
     const double residual =
         BearingAngularResidual(
             observerPosition,
             bearingDirection,
-            targetPosition
-        );
+            targetPosition);
 
     WARN("Initial bearing = " << bearing);
     WARN("Direction alignment = " << alignment);
     WARN("Residual = " << residual * 180.0 / 3.14159265358979323846);
 
     REQUIRE(
-        std::abs(alignment - 1.0) < 1e-12
-    );
+        std::abs(alignment - 1.0) < 1e-12);
 
     REQUIRE(
-        std::abs(residual) < 1e-12
-    );
+        std::abs(residual) < 1e-12);
+}
+
+TEST_CASE("Bearing objective is zero for the true target")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const GeoCoordinate observerA{
+        0.0,
+        0.0};
+
+    const GeoCoordinate observerB{
+        0.0,
+        90.0};
+
+    const GeoCoordinate observerC{
+        30.0,
+        45.0};
+
+    const BearingObservation observationA{
+        observerA,
+        InitialBearing(observerA, target)};
+
+    const BearingObservation observationB{
+        observerB,
+        InitialBearing(observerB, target)};
+
+    const BearingObservation observationC{
+        observerC,
+        InitialBearing(observerC, target)};
+
+    const std::vector<BearingObservation> observations{
+        observationA,
+        observationB,
+        observationC};
+
+    const auto targetPosition =
+        LatLonToECEF(target);
+
+    const double error =
+        BearingError(
+            targetPosition,
+            observations);
+
+    INFO("Bearing objective error: " << error);
+
+    REQUIRE(error < 1e-20);
+}
+
+TEST_CASE("Bearing objective is larger for a wrong target")
+{
+    const GeoCoordinate target{
+        20.0,
+        40.0};
+
+    const GeoCoordinate wrongTarget{
+        25.0,
+        45.0};
+
+    const GeoCoordinate observerA{
+        0.0,
+        0.0};
+
+    const GeoCoordinate observerB{
+        0.0,
+        90.0};
+
+    const GeoCoordinate observerC{
+        30.0,
+        45.0};
+
+    const BearingObservation observationA{
+        observerA,
+        InitialBearing(observerA, target)};
+
+    const BearingObservation observationB{
+        observerB,
+        InitialBearing(observerB, target)};
+
+    const BearingObservation observationC{
+        observerC,
+        InitialBearing(observerC, target)};
+
+    const std::vector<BearingObservation> observations{
+        observationA,
+        observationB,
+        observationC};
+
+    const auto wrongPosition =
+        LatLonToECEF(wrongTarget);
+
+    const double error =
+        BearingError(
+            wrongPosition,
+            observations);
+
+    INFO("Wrong-target bearing objective error: " << error);
+
+    REQUIRE(error > 0.0);
+}
+
+TEST_CASE("Bearing objective increases as target moves away")
+{
+    const geotrace::geodesy::GeoCoordinate trueTarget{
+        20.0,
+        40.0};
+
+    const geotrace::solver::BearingObservation observationA{
+        {0.0, 0.0},
+        geotrace::geodesy::InitialBearing(
+            {0.0, 0.0},
+            trueTarget)};
+
+    const geotrace::solver::BearingObservation observationB{
+        {0.0, 90.0},
+        geotrace::geodesy::InitialBearing(
+            {0.0, 90.0},
+            trueTarget)};
+
+    const geotrace::solver::BearingObservation observationC{
+        {30.0, 45.0},
+        geotrace::geodesy::InitialBearing(
+            {30.0, 45.0},
+            trueTarget)};
+
+    const std::vector<geotrace::solver::BearingObservation> observations{
+        observationA,
+        observationB,
+        observationC};
+
+    const auto nearbyTarget =
+        geotrace::geodesy::LatLonToECEF(
+            {21.0, 41.0});
+
+    const auto furtherTarget =
+        geotrace::geodesy::LatLonToECEF(
+            {30.0, 50.0});
+
+    const auto veryWrongTarget =
+        geotrace::geodesy::LatLonToECEF(
+            {-20.0, -40.0});
+
+    const double nearbyError =
+        geotrace::solver::BearingError(
+            nearbyTarget,
+            observations);
+
+    const double furtherError =
+        geotrace::solver::BearingError(
+            furtherTarget,
+            observations);
+
+    const double veryWrongError =
+        geotrace::solver::BearingError(
+            veryWrongTarget,
+            observations);
+
+    REQUIRE(nearbyError > 0.0);
+    REQUIRE(furtherError > nearbyError);
+    REQUIRE(veryWrongError > furtherError);
+}
+
+TEST_CASE("Bearing optimizer improves a noisy initial estimate")
+{
+    const geotrace::geodesy::GeoCoordinate trueTarget{
+        20.0,
+        40.0};
+
+    const geotrace::solver::BearingObservation observationA{
+        {0.0, 0.0},
+        geotrace::geodesy::InitialBearing(
+            {0.0, 0.0},
+            trueTarget) +
+            1.0};
+
+    const geotrace::solver::BearingObservation observationB{
+        {0.0, 90.0},
+        geotrace::geodesy::InitialBearing(
+            {0.0, 90.0},
+            trueTarget) -
+            1.0};
+
+    const geotrace::solver::BearingObservation observationC{
+        {30.0, 45.0},
+        geotrace::geodesy::InitialBearing(
+            {30.0, 45.0},
+            trueTarget) +
+            1.0};
+
+    const std::vector<geotrace::solver::BearingObservation> observations{
+        observationA,
+        observationB,
+        observationC};
+
+    const auto initialEstimate =
+        geotrace::solver::SolveInitial(
+            observationA,
+            observationB,
+            observationC);
+
+    const double initialError =
+        geotrace::solver::BearingError(
+            geotrace::geodesy::LatLonToECEF(
+                initialEstimate),
+            observations);
+
+    const auto optimizedEstimate =
+        geotrace::solver::OptimizeBearingTarget(
+            initialEstimate,
+            observations);
+
+    const double optimizedError =
+        geotrace::solver::BearingError(
+            geotrace::geodesy::LatLonToECEF(
+                optimizedEstimate),
+            observations);
+
+    REQUIRE(optimizedError < initialError);
+}
+
+TEST_CASE("Bearing optimizer improves solutions across noise levels")
+{
+    const geotrace::geodesy::GeoCoordinate trueTarget{
+        20.0,
+        40.0};
+
+    const std::vector<double> noiseLevels{
+        0.0,
+        0.1,
+        0.5,
+        1.0,
+        2.0,
+        5.0};
+
+    for (const double noise : noiseLevels)
+    {
+        const geotrace::solver::BearingObservation observationA{
+            {0.0, 0.0},
+            AddBearingNoise(
+                geotrace::geodesy::InitialBearing(
+                    {0.0, 0.0},
+                    trueTarget),
+                noise)};
+
+        const geotrace::solver::BearingObservation observationB{
+            {0.0, 90.0},
+            AddBearingNoise(
+                geotrace::geodesy::InitialBearing(
+                    {0.0, 90.0},
+                    trueTarget),
+                -noise)};
+
+        const geotrace::solver::BearingObservation observationC{
+            {30.0, 45.0},
+            AddBearingNoise(
+                geotrace::geodesy::InitialBearing(
+                    {30.0, 45.0},
+                    trueTarget),
+                noise)};
+
+        const std::vector<geotrace::solver::BearingObservation> observations{
+            observationA,
+            observationB,
+            observationC};
+
+        const auto initialEstimate =
+            geotrace::solver::SolveInitial(
+                observationA,
+                observationB,
+                observationC);
+
+        const auto optimizedEstimate =
+            geotrace::solver::OptimizeBearingTarget(
+                initialEstimate,
+                observations);
+
+        const double initialError =
+            geotrace::solver::BearingError(
+                geotrace::geodesy::LatLonToECEF(
+                    initialEstimate),
+                observations);
+
+        const double optimizedError =
+            geotrace::solver::BearingError(
+                geotrace::geodesy::LatLonToECEF(
+                    optimizedEstimate),
+                observations);
+
+        const double initialPositionError =
+            AngularDistanceDegrees(
+                trueTarget,
+                initialEstimate);
+
+        const double optimizedPositionError =
+            AngularDistanceDegrees(
+                trueTarget,
+                optimizedEstimate);
+
+        INFO("Noise = " << noise << " degrees");
+        INFO("Initial error = " << initialError);
+        INFO("Optimized error = " << optimizedError);
+
+        REQUIRE(optimizedError <= initialError);
+        std::cout
+            << "Noise = " << noise << " deg\n"
+            << "  Initial estimate: ("
+            << initialEstimate.latitude << ", "
+            << initialEstimate.longitude << ")\n"
+            << "  Optimized estimate: ("
+            << optimizedEstimate.latitude << ", "
+            << optimizedEstimate.longitude << ")\n"
+            << "  Initial objective: "
+            << initialError << "\n"
+            << "  Optimized objective: "
+            << optimizedError << "\n"
+            << "  Initial position error: "
+            << initialPositionError << " deg\n"
+            << "  Optimized position error: "
+            << optimizedPositionError << " deg\n\n";
+    }
+}
+
+TEST_CASE("Bearing optimizer is evaluated across randomized noise")
+{
+    const geotrace::geodesy::GeoCoordinate trueTarget{
+        20.0,
+        40.0};
+
+    const std::vector<double> noiseLevels{
+        0.1,
+        0.5,
+        1.0,
+        2.0,
+        5.0};
+
+    constexpr int trialsPerNoiseLevel = 100;
+
+    std::mt19937 generator(42);
+
+    double totalInitialErrorAcrossAllLevels = 0.0;
+    double totalOptimizedErrorAcrossAllLevels = 0.0;
+
+    for (const double noiseLevel : noiseLevels)
+    {
+        std::uniform_real_distribution<double> noiseDistribution(
+            -noiseLevel,
+            noiseLevel);
+
+        double totalInitialPositionError = 0.0;
+        double totalOptimizedPositionError = 0.0;
+
+        int optimizerImprovedCount = 0;
+
+        for (int trial = 0;
+             trial < trialsPerNoiseLevel;
+             ++trial)
+        {
+            const geotrace::solver::BearingObservation observationA{
+                {0.0, 0.0},
+                AddBearingNoise(
+                    geotrace::geodesy::InitialBearing(
+                        {0.0, 0.0},
+                        trueTarget),
+                    noiseDistribution(generator))};
+
+            const geotrace::solver::BearingObservation observationB{
+                {0.0, 90.0},
+                AddBearingNoise(
+                    geotrace::geodesy::InitialBearing(
+                        {0.0, 90.0},
+                        trueTarget),
+                    noiseDistribution(generator))};
+
+            const geotrace::solver::BearingObservation observationC{
+                {30.0, 45.0},
+                AddBearingNoise(
+                    geotrace::geodesy::InitialBearing(
+                        {30.0, 45.0},
+                        trueTarget),
+                    noiseDistribution(generator))};
+
+            const std::vector<geotrace::solver::BearingObservation>
+                observations{
+                    observationA,
+                    observationB,
+                    observationC};
+
+            const auto initialEstimate =
+                geotrace::solver::SolveInitial(
+                    observationA,
+                    observationB,
+                    observationC);
+
+            const auto optimizedEstimate =
+                geotrace::solver::OptimizeBearingTarget(
+                    initialEstimate,
+                    observations);
+
+            const double initialPositionError =
+                AngularDistanceDegrees(
+                    trueTarget,
+                    initialEstimate);
+
+            const double optimizedPositionError =
+                AngularDistanceDegrees(
+                    trueTarget,
+                    optimizedEstimate);
+
+            totalInitialPositionError +=
+                initialPositionError;
+
+            totalOptimizedPositionError +=
+                optimizedPositionError;
+
+            if (optimizedPositionError <
+                initialPositionError)
+            {
+                ++optimizerImprovedCount;
+            }
+        }
+
+        const double meanInitialPositionError =
+            totalInitialPositionError /
+            trialsPerNoiseLevel;
+
+        const double meanOptimizedPositionError =
+            totalOptimizedPositionError /
+            trialsPerNoiseLevel;
+
+        totalInitialErrorAcrossAllLevels +=
+            meanInitialPositionError;
+
+        totalOptimizedErrorAcrossAllLevels +=
+            meanOptimizedPositionError;
+
+        std::cout
+            << "\nNoise level: "
+            << noiseLevel
+            << " deg\n"
+            << "  Mean initial position error: "
+            << meanInitialPositionError
+            << " deg\n"
+            << "  Mean optimized position error: "
+            << meanOptimizedPositionError
+            << " deg\n"
+            << "  Optimizer improved: "
+            << optimizerImprovedCount
+            << " / "
+            << trialsPerNoiseLevel
+            << " trials\n";
+    }
+
+    REQUIRE(
+        totalOptimizedErrorAcrossAllLevels <
+        totalInitialErrorAcrossAllLevels);
 }

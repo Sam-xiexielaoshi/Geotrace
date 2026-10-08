@@ -20,6 +20,8 @@ add_executable(GeoTrace
     src/solver/BearingSolver.cpp
     src/io/CsvReader.cpp
     src/io/CsvWriter.cpp
+    src/solver/BearingObjective.cpp
+    src/solver/BearingOptimizer.cpp
 
 )
 
@@ -59,6 +61,8 @@ add_executable(GeoTraceTests
     src/solver/BearingSolver.cpp
     src/io/CsvReader.cpp
     src/io/CsvWriter.cpp
+    src/solver/BearingObjective.cpp
+    src/solver/BearingOptimizer.cpp
 
 )
 

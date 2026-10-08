@@ -1,14 +1,16 @@
 #include "GeoTrace/solver/BearingSolver.h"
-
 #include "GeoTrace/geometry/BearingPlane.h"
+#include "GeoTrace/solver/BearingOptimizer.h"
+
 #include "GeoTrace/geometry/PlaneIntersection.h"
 #include "GeoTrace/geodesy/GeoCoordinate.h"
 
 #include <stdexcept>
+#include <vector>
 
 namespace geotrace::solver
 {
-    geodesy::GeoCoordinate Solve(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC)
+    geodesy::GeoCoordinate SolveInitial(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC)
     {
         // convert observer positions to 3d unit vectors
         const auto positionA = geodesy::LatLonToECEF(observationA.observer);
@@ -42,5 +44,12 @@ namespace geotrace::solver
 
         // convert final direction back to latitude and longitude
         return geodesy::ECEFToLatLon(combined.Normalize());
+    }
+
+    geodesy::GeoCoordinate Solve(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC)
+    {
+        const auto initialEstimate = SolveInitial(observationA, observationB, observationC);
+        const std::vector<BearingObservation> observations{observationA, observationB, observationC};
+        return OptimizeBearingTarget(initialEstimate, observations);
     }
 }

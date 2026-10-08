@@ -5,5 +5,6 @@
 
 namespace geotrace::solver
 {
+    geodesy::GeoCoordinate SolveInitial(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC);
     geodesy::GeoCoordinate Solve(const BearingObservation &observationA, const BearingObservation &observationB, const BearingObservation &observationC);
 }
