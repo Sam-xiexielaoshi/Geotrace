@@ -25,6 +25,8 @@ add_executable(GeoTrace
     src/solver/BearingPlaneBuilder.cpp
     src/solver/BearingIntersectionBuilder.cpp
     src/solver/BearingCandidateCombiner.cpp
+    src/solver/BearingJacobian.cpp
+    src/solver/BearingGaussNewtonOptimizer.cpp
 
 )
 
@@ -69,6 +71,8 @@ add_executable(GeoTraceTests
     src/solver/BearingPlaneBuilder.cpp
     src/solver/BearingIntersectionBuilder.cpp
     src/solver/BearingCandidateCombiner.cpp
+    src/solver/BearingJacobian.cpp
+    src/solver/BearingGaussNewtonOptimizer.cpp
 
 )
 
